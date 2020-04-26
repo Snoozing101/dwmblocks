@@ -1,0 +1,50 @@
+From a6bb328d98886b2b770ef5924e3f06bfffd1dc6e Mon Sep 17 00:00:00 2001
+From: Snoozing <at075027@gmail.com>
+Date: Sun, 26 Apr 2020 20:44:49 +0100
+Subject: [PATCH] Add dummysighandler to stop random dwmblock crashes
+
+---
+ dwmblocks.c | 13 +++++++++++++
+ 1 file changed, 13 insertions(+)
+
+diff --git a/dwmblocks.c b/dwmblocks.c
+index de872bf..b87382b 100644
+--- a/dwmblocks.c
++++ b/dwmblocks.c
+@@ -13,6 +13,7 @@ typedef struct {
+ 	unsigned int interval;
+ 	unsigned int signal;
+ } Block;
++void dummysighandler(int num);
+ void sighandler(int num);
+ void buttonhandler(int sig, siginfo_t *si, void *ucontext);
+ void replace(char *str, char old, char new);
+@@ -124,6 +125,10 @@ void getsigcmds(int signal)
+ 
+ void setupsignals()
+ {
++    /* initialize all real time signals with dummy handler */
++    for(int i = SIGRTMIN; i <= SIGRTMAX; i++)
++        signal(i, dummysighandler);
++
+ 	struct sigaction sa;
+ 	for(int i = 0; i < LENGTH(blocks); i++)
+ 	{
+@@ -189,6 +194,14 @@ void statusloop()
+ 	}
+ }
+ 
++#ifndef __OpenBSD__
++/* this signal handler should do nothing */
++void dummysighandler(int signum)
++{
++    return;
++}
++#endif
++
+ #ifndef __OpenBSD__
+ void sighandler(int signum)
+ {
+-- 
+2.26.2
+
