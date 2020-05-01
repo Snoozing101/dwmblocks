@@ -13,6 +13,7 @@ typedef struct {
 	unsigned int interval;
 	unsigned int signal;
 } Block;
+void dummysighandler(int num);
 void sighandler(int num);
 void buttonhandler(int sig, siginfo_t *si, void *ucontext);
 void replace(char *str, char old, char new);
@@ -124,6 +125,10 @@ void getsigcmds(int signal)
 
 void setupsignals()
 {
+    /* initialize all real time signals with dummy handler */
+    for(int i = SIGRTMIN; i <= SIGRTMAX; i++)
+        signal(i, dummysighandler);
+
 	struct sigaction sa;
 	for(int i = 0; i < LENGTH(blocks); i++)
 	{
@@ -188,6 +193,14 @@ void statusloop()
 		i++;
 	}
 }
+
+#ifndef __OpenBSD__
+/* this signal handler should do nothing */
+void dummysighandler(int signum)
+{
+    return;
+}
+#endif
 
 #ifndef __OpenBSD__
 void sighandler(int signum)
